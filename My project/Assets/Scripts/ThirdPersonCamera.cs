@@ -1,4 +1,7 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class ThirdPersonCamera : MonoBehaviour
 {
@@ -47,14 +50,37 @@ public class ThirdPersonCamera : MonoBehaviour
             cachedRenderers = target.GetComponentsInChildren<Renderer>();
         }
 
-        // 1. Input (Mouse Orbit)
-        x += Input.GetAxis("Mouse X") * xSpeed * 0.02f;
-        y -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
+        // 1. Input (Mouse Orbit) & Zoom
+        float inputX = 0f;
+        float inputY = 0f;
+        float inputZoom = 0f;
+
+#if ENABLE_INPUT_SYSTEM
+        if (UnityEngine.InputSystem.Mouse.current != null)
+        {
+            // New Input System reads raw pixel delta
+            Vector2 delta = UnityEngine.InputSystem.Mouse.current.delta.ReadValue();
+            inputX = delta.x * 0.5f; // Scale down slightly to match legacy feel
+            inputY = delta.y * 0.5f;
+            
+            // Scroll read value is ~120 per notch, vs Legacy 0.1-1.0
+            // We need to scale it significantly
+            inputZoom = UnityEngine.InputSystem.Mouse.current.scroll.y.ReadValue() * 0.01f; 
+        }
+#else
+        // Legacy Input
+        inputX = Input.GetAxis("Mouse X");
+        inputY = Input.GetAxis("Mouse Y");
+        inputZoom = Input.GetAxis("Mouse ScrollWheel");
+#endif
+
+        x += inputX * xSpeed * 0.02f;
+        y -= inputY * ySpeed * 0.02f;
 
         y = ClampAngle(y, yMinLimit, yMaxLimit);
 
-        // 2. Input (Zoom)
-        distance -= Input.GetAxis("Mouse ScrollWheel") * zoomSpeed;
+        // 2. Apply Zoom
+        distance -= inputZoom * zoomSpeed;
         distance = Mathf.Clamp(distance, minDistance, maxDistance);
 
         // 3. FPV Toggle Logic (Hide mesh when too close)
@@ -82,6 +108,10 @@ public class ThirdPersonCamera : MonoBehaviour
         // 5. Apply
         transform.rotation = rotation;
         transform.position = position;
+
+        // Force look at target to ensure it stays perfectly centered despite any math drift
+        // We use the adjusted offset (finalOffset) so we look at the head/upper body
+        transform.LookAt(target.position + finalOffset); 
     }
 
     static float ClampAngle(float angle, float min, float max)

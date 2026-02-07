@@ -1,63 +1,134 @@
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
-using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 5.0f;
+    [Header("Movement")]
+    public float speed = 6.0f;
+    public float jumpHeight = 3.0f;
+    public float gravity = -9.81f;
+    
+    [Header("Combat")]
+    public float attackRange = 2.0f;
+    public int attackDamage = 1;
+    public LayerMask enemyLayer;
+
+    private CharacterController controller;
+    private Vector3 playerVelocity;
+    private bool groundedPlayer;
+
+    void Start()
+    {
+        controller = GetComponent<CharacterController>();
+        // Ensure we are at Z=0
+        Vector3 pos = transform.position;
+        pos.z = 0;
+        transform.position = pos;
+    }
 
     void Update()
     {
-        float moveHorizontal = 0f;
-        float moveVertical = 0f;
+        HandleMovement();
+        HandleCombat();
+    }
 
-        // 1. Try New Input System (if package is installed)
-#if ENABLE_INPUT_SYSTEM
-        // Check if Keyboard is supported and present
+    void HandleMovement()
+    {
+        groundedPlayer = controller.isGrounded;
+        if (groundedPlayer && playerVelocity.y < 0)
+        {
+            playerVelocity.y = 0f;
+        }
+
+        Vector2 input = GetInput();
+        // 2D Movement: Input X maps to World X. Input Y is ignored for movement (used for jump/ladders maybe, but here just X).
+        Vector3 move = new Vector3(input.x, 0, 0);
+
+        // Rotation: Face Left/Right
+        if (move.x > 0) transform.rotation = Quaternion.Euler(0, 90, 0); // Face Right
+        else if (move.x < 0) transform.rotation = Quaternion.Euler(0, -90, 0); // Face Left
+
+        controller.Move(move * speed * Time.deltaTime);
+
+        // Jump
+        bool jumpPressed = false;
+        #if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null) jumpPressed = Keyboard.current.spaceKey.wasPressedThisFrame;
+        #else
+        jumpPressed = Input.GetButtonDown("Jump");
+        #endif
+
+        if (jumpPressed && groundedPlayer)
+        {
+            playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravity);
+        }
+
+        // Apply Gravity
+        playerVelocity.y += gravity * Time.deltaTime;
+        
+        // Ensure Z is always 0 (correction)
+        Vector3 finalMove = playerVelocity * Time.deltaTime;
+        if (transform.position.z != 0)
+        {
+            finalMove.z = -transform.position.z; // Force back to 0
+        }
+        
+        controller.Move(finalMove);
+    }
+
+    void HandleCombat()
+    {
+        bool attackPressed = false;
+        #if ENABLE_INPUT_SYSTEM
+        if (Mouse.current != null) attackPressed = Mouse.current.leftButton.wasPressedThisFrame;
+        #else
+        attackPressed = Input.GetButtonDown("Fire1");
+        #endif
+
+        if (attackPressed)
+        {
+            Attack();
+        }
+    }
+
+    void Attack()
+    {
+        Debug.Log("Player Attacks!");
+        // Visualize attack
+        Debug.DrawRay(transform.position + Vector3.up, transform.forward * attackRange, Color.red, 0.5f);
+
+        // Simple SphereCast/OverlapSphere
+        Collider[] hitEnemies = Physics.OverlapSphere(transform.position + transform.forward, attackRange);
+        foreach (Collider hit in hitEnemies)
+        {
+            Enemy enemy = hit.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(attackDamage);
+            }
+        }
+    }
+
+    Vector2 GetInput()
+    {
+        float x = 0;
+        float y = 0;
+
+        #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null)
         {
-            if (Keyboard.current.leftArrowKey.isPressed || Keyboard.current.aKey.isPressed) moveHorizontal = -1f;
-            if (Keyboard.current.rightArrowKey.isPressed || Keyboard.current.dKey.isPressed) moveHorizontal = 1f;
-            if (Keyboard.current.downArrowKey.isPressed || Keyboard.current.sKey.isPressed) moveVertical = -1f;
-            if (Keyboard.current.upArrowKey.isPressed || Keyboard.current.wKey.isPressed) moveVertical = 1f;
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) x = -1;
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) x = 1;
+            // Removed W/S keys for Z-movement
         }
-#endif
+        #else
+        x = Input.GetAxisRaw("Horizontal");
+        // y = Input.GetAxisRaw("Vertical"); // Unused in 2D side-scroller walk
+        #endif
 
-        // 2. Fallback to Legacy Input (if New Input System didn't catch anything, OR if we are in Legacy mode)
-        // We only try legacy if we haven't detected movement yet, to allow mixed environments (Active Input Handling: Both)
-        // Also guarded by try-catch just in case Legacy is completely disabled
-        if (moveHorizontal == 0 && moveVertical == 0)
-        {
-            try
-            {
-                // This check avoids the error log spam if Legacy is disabled
-                // However, without 'Both' enabled, Input.GetAxis throws. 
-                // straightforward way: catch the exception silently or check settings (hard at runtime).
-                // We'll just try it.
-                moveHorizontal = Input.GetAxis("Horizontal");
-                moveVertical = Input.GetAxis("Vertical");
-            }
-            catch (System.InvalidOperationException)
-            {
-                // Legacy input disabled. Do nothing, as we already tried New Input System above.
-            }
-        }
-
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-
-        if (movement.magnitude > 0)
-        {
-            Debug.Log($"Moving: {movement}");
-        }
-
-        // Rotation
-        if (movement != Vector3.zero)
-        {
-            Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, 720 * Time.deltaTime);
-        }
-
-        transform.Translate(movement * speed * Time.deltaTime, Space.World);
+        return new Vector2(x, y);
     }
 }
