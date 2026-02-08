@@ -14,7 +14,7 @@ namespace SimpleRPG
         public float jumpForce = 15f; 
 
         [Header("Health")]
-        public int maxHealth = 100;
+        public int maxHealth = 200;
         public int currentHealth;
         
         // Event for UI
@@ -34,6 +34,8 @@ namespace SimpleRPG
         public Transform groundCheck;
         public float groundCheckRadius = 0.2f;
         public LayerMask groundLayer;
+
+
 
         private void Start()
         {

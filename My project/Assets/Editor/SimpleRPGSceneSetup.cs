@@ -69,7 +69,7 @@ public class SimpleRPGSceneSetup : EditorWindow
         GameObject cameraObj = new GameObject("Main Camera");
         Camera cam = cameraObj.AddComponent<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.2f, 0.2f, 0.2f); 
+        cam.backgroundColor = new Color(0.53f, 0.81f, 0.98f); // Sky Blue (Fallback)
         cam.orthographic = true;
         cam.orthographicSize = 8f; 
         cameraObj.tag = "MainCamera";
@@ -77,22 +77,61 @@ public class SimpleRPGSceneSetup : EditorWindow
         cameraObj.transform.SetParent(player.transform);
         cameraObj.transform.localPosition = new Vector3(0, 2, -10);
 
-        // Enemy (Red Stone)
-        GameObject enemy = new GameObject("Deadly Red Stone");
-        SpriteRenderer enemySr = enemy.AddComponent<SpriteRenderer>();
-        Sprite enemySprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Enemies/SpikyBall.png");
-        enemySr.sprite = enemySprite;
-        enemySr.sortingOrder = 5; 
-        enemySr.color = Color.red; 
+        // Background (Sky Sprite)
+        GameObject bgSky = new GameObject("SkyBackground");
+        SpriteRenderer bgSkySr = bgSky.AddComponent<SpriteRenderer>();
+        Sprite skySprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Backgrounds/SkyBackground.png");
+        if (skySprite != null)
+        {
+            bgSkySr.sprite = skySprite;
+            // Scale to cover checking typical 16:9 aspect ratio at size 8
+            // Size 8 orthographic means height is 16 units. Width is ~28. 
+            // Sprite is likely small/pixel art or large. Let's set a safe large scale.
+            bgSky.transform.localScale = new Vector3(2f, 2f, 1f); 
+        }
+        else
+        {
+             Debug.LogWarning("SkyBackground sprite not found!");
+        }
+        bgSky.transform.SetParent(cameraObj.transform);
+        bgSky.transform.localPosition = new Vector3(0, 0, 10); // Behind everything relative to camera
+        
+        // Poop Asset Assignment - Removed from Player as per new pivot
+        // Sprite poopSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Items & Icons/Pixel Art/Rock.png");
+        // if (poopSprite != null) playerScript.poopSprite = poopSprite;
 
-        enemy.transform.position = new Vector3(5, -2f + (enemySprite != null ? enemySprite.bounds.extents.y : 1f), 0);
+        // Enemy (Cannon Enemy) - With Turret Logic
+        GameObject enemy = new GameObject("Cannon Enemy");
+        // Root components
         Rigidbody2D enemyRb = enemy.AddComponent<Rigidbody2D>();
         enemyRb.bodyType = RigidbodyType2D.Kinematic; 
         enemy.AddComponent<BoxCollider2D>();
+
+        // Turret (Child)
+        GameObject turretObj = new GameObject("Turret");
+        turretObj.transform.SetParent(enemy.transform);
+        turretObj.transform.localPosition = Vector3.zero;
+        
+        SpriteRenderer turretSr = turretObj.AddComponent<SpriteRenderer>();
+        Sprite cannonSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Enemies/Canon.png");
+        turretSr.sprite = cannonSprite;
+        turretSr.sortingOrder = 5; 
+        turretSr.color = Color.white; 
+
+        // Visual Base? (For now, just using Turret as the main visual, but rotating internally)
+        // If we want a separate non-rotating base, we'd add another sprite here.
+        // For now, let's assume the "Cannon Enemy" object is the anchor, and "Cannon Sprite" rotates.
+
+        // Use Rock.png (Poop) for Projectile
+        Sprite poopRockSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Items & Icons/Pixel Art/Rock.png");
+
+        enemy.transform.position = new Vector3(5, -2f + (cannonSprite != null ? cannonSprite.bounds.extents.y : 0.5f), 0);
         
         SimpleRPGEnemy enemyScript = enemy.AddComponent<SimpleRPGEnemy>();
-        enemyScript.damage = 20; 
+        enemyScript.damage = 10; 
         enemyScript.moveSpeed = 0f; 
+        enemyScript.projectileSprite = poopRockSprite; 
+        enemyScript.turret = turretObj.transform; // Assign Rotating Part 
 
         // UI Setup
         GameObject canvasObj = new GameObject("Canvas");
