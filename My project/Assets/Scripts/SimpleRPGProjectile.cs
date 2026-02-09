@@ -30,7 +30,7 @@ namespace SimpleRPG
             }
 
             // Auto-destroy after lifetime
-            Destroy(gameObject, lifeTime);
+// Destroy(gameObject, lifeTime); // Disabled time-based destruction
         }
 
         private void Update()
@@ -69,11 +69,13 @@ namespace SimpleRPG
                 }
             }
             // Hit Ground/Wall? (Assuming "Default" layer or similar, check by non-trigger collider usually)
+            /*
             else if (!other.isTrigger && other.gameObject.layer != LayerMask.NameToLayer("Ignore Raycast"))
             {
                 // Destroy on impact with non-trigger objects (like ground)
-                 Destroy(gameObject);
+                 // Destroy(gameObject); // Disabled ground collision destruction
             }
+            */
         }
     }
 }

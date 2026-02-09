@@ -12,9 +12,11 @@ namespace SimpleRPG
         [Header("Movement")]
         public float moveSpeed = 5f;
         public float jumpForce = 15f; 
+        public int extraJumpsValue = 1;
+        private int extraJumps; 
 
         [Header("Health")]
-        public int maxHealth = 200;
+        public int maxHealth = 2000;
         public int currentHealth;
         
         // Event for UI
@@ -78,9 +80,22 @@ namespace SimpleRPG
             jumpPressed = Input.GetButtonDown("Jump");
 #endif
             
-            if (jumpPressed && isGrounded)
+            if (isGrounded)
             {
-                Jump();
+                extraJumps = extraJumpsValue;
+            }
+
+            if (jumpPressed)
+            {
+                if (isGrounded)
+                {
+                    Jump();
+                }
+                else if (extraJumps > 0)
+                {
+                    Jump();
+                    extraJumps--;
+                }
             }
 
             movement = new Vector2(mx, 0);

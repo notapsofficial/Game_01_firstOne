@@ -39,7 +39,7 @@ public class SimpleRPGSceneSetup : EditorWindow
         
         float groundHalfHeight = groundSprite != null ? groundSprite.bounds.extents.y : 1f;
         ground.transform.position = new Vector3(0, -2f - groundHalfHeight, 0); 
-        ground.transform.localScale = Vector3.one; 
+        ground.transform.localScale = new Vector3(100f, 1f, 1f); 
         BoxCollider2D groundCol = ground.AddComponent<BoxCollider2D>();
         ground.layer = LayerMask.NameToLayer("Default");
 
