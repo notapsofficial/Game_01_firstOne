@@ -101,37 +101,39 @@ public class SimpleRPGSceneSetup : EditorWindow
         // if (poopSprite != null) playerScript.poopSprite = poopSprite;
 
         // Enemy (Cannon Enemy) - With Turret Logic
-        GameObject enemy = new GameObject("Cannon Enemy");
-        // Root components
-        Rigidbody2D enemyRb = enemy.AddComponent<Rigidbody2D>();
-        enemyRb.bodyType = RigidbodyType2D.Kinematic; 
-        enemy.AddComponent<BoxCollider2D>();
+        // Enemies (Cannon Enemy) - With Turret Logic
+        for (int i = 0; i < 3; i++)
+        {
+            GameObject enemy = new GameObject($"Cannon Enemy {i}");
+            // Root components
+            Rigidbody2D enemyRb = enemy.AddComponent<Rigidbody2D>();
+            enemyRb.bodyType = RigidbodyType2D.Kinematic; 
+            enemy.AddComponent<BoxCollider2D>();
 
-        // Turret (Child)
-        GameObject turretObj = new GameObject("Turret");
-        turretObj.transform.SetParent(enemy.transform);
-        turretObj.transform.localPosition = Vector3.zero;
-        
-        SpriteRenderer turretSr = turretObj.AddComponent<SpriteRenderer>();
-        Sprite cannonSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Enemies/Canon.png");
-        turretSr.sprite = cannonSprite;
-        turretSr.sortingOrder = 5; 
-        turretSr.color = Color.white; 
+            // Turret (Child)
+            GameObject turretObj = new GameObject("Turret");
+            turretObj.transform.SetParent(enemy.transform);
+            turretObj.transform.localPosition = Vector3.zero;
+            
+            SpriteRenderer turretSr = turretObj.AddComponent<SpriteRenderer>();
+            Sprite cannonSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Enemies/Canon.png");
+            turretSr.sprite = cannonSprite;
+            turretSr.sortingOrder = 5; 
+            turretSr.color = Color.white; 
 
-        // Visual Base? (For now, just using Turret as the main visual, but rotating internally)
-        // If we want a separate non-rotating base, we'd add another sprite here.
-        // For now, let's assume the "Cannon Enemy" object is the anchor, and "Cannon Sprite" rotates.
+            // Use Rock.png (Poop) for Projectile
+            Sprite poopRockSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Items & Icons/Pixel Art/Rock.png");
 
-        // Use Rock.png (Poop) for Projectile
-        Sprite poopRockSprite = LoadSprite("Assets/Brackeys/2D Mega Pack/Items & Icons/Pixel Art/Rock.png");
-
-        enemy.transform.position = new Vector3(5, -2f + (cannonSprite != null ? cannonSprite.bounds.extents.y : 0.5f), 0);
-        
-        SimpleRPGEnemy enemyScript = enemy.AddComponent<SimpleRPGEnemy>();
-        enemyScript.damage = 10; 
-        enemyScript.moveSpeed = 0f; 
-        enemyScript.projectileSprite = poopRockSprite; 
-        enemyScript.turret = turretObj.transform; // Assign Rotating Part 
+            // Position: 5, 13, 21, 29, 37, 45 (Spaced out along the path)
+            float xPos = 5 + (i * 8);
+            enemy.transform.position = new Vector3(xPos, -2f + (cannonSprite != null ? cannonSprite.bounds.extents.y : 0.5f), 0);
+            
+            SimpleRPGEnemy enemyScript = enemy.AddComponent<SimpleRPGEnemy>();
+            enemyScript.damage = 10; 
+            enemyScript.moveSpeed = 0f; 
+            enemyScript.projectileSprite = poopRockSprite; 
+            enemyScript.turret = turretObj.transform; // Assign Rotating Part 
+        } 
 
         // UI Setup
         GameObject canvasObj = new GameObject("Canvas");
