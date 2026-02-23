@@ -29,6 +29,7 @@ public class SimpleRPGSceneSetup : EditorWindow
 
         GameObject gmObj = new GameObject("GameManager");
         gmObj.AddComponent<SimpleRPGGameManager>();
+        gmObj.AddComponent<SimpleRPGBGM>();
 
         // Environment
         GameObject ground = new GameObject("Ground");
@@ -68,6 +69,7 @@ public class SimpleRPGSceneSetup : EditorWindow
         // Camera
         GameObject cameraObj = new GameObject("Main Camera");
         Camera cam = cameraObj.AddComponent<Camera>();
+        cameraObj.AddComponent<AudioListener>(); // Required for audio playback
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.53f, 0.81f, 0.98f); // Sky Blue (Fallback)
         cam.orthographic = true;
@@ -102,7 +104,7 @@ public class SimpleRPGSceneSetup : EditorWindow
 
         // Enemy (Cannon Enemy) - With Turret Logic
         // Enemies (Cannon Enemy) - With Turret Logic
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 1; i++)
         {
             GameObject enemy = new GameObject($"Cannon Enemy {i}");
             // Root components

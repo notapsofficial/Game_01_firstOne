@@ -13,6 +13,12 @@ namespace SimpleRPG
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+
+                // Auto-add BGM if not already attached
+                if (GetComponent<SimpleRPGBGM>() == null)
+                {
+                    gameObject.AddComponent<SimpleRPGBGM>();
+                }
             }
             else
             {
